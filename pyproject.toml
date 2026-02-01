@@ -1,0 +1,16 @@
+[project]
+name = "worklog"
+version = "0.1.0"
+description = "Worklog interactivo por intervalos para registrar actividades laborales (Windows + TZ Colombia)."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Alidev" }]
+dependencies = []
+
+[project.scripts]
+worklog = "worklog.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

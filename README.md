@@ -1,100 +1,195 @@
-# time-report
+````md
+# worklog
 
-This is a simple but very useful script for people like me who forget to report their hours on DevOps or other reporting platforms. This script helps you open a console every hour where you can write down the activity you were doing, so you can keep a record of everything you do during the day.
+Herramienta de consola para registrar tus actividades por bloques de tiempo, pensada para el uso diario
+y para facilitar el reporte de horas en Azure DevOps.
 
-## Features
+- Control de jornada: **L–V, 07:00–17:00** (por defecto)
+- Timezone: **America/Bogota**
+- Exporta: **JSONL (fuente), CSV (Excel), Markdown (copy/paste)**
 
-- 🕐 **Hourly Prompts**: Automatically prompts you every hour to log your activities
-- 📝 **Simple Console Interface**: Easy-to-use text-based input
-- 📅 **Daily Log Files**: Saves all entries to dated log files (e.g., `time_report_2026-02-01.log`)
-- ⏱️ **Timestamped Entries**: Each entry includes an exact timestamp
-- 🚀 **Easy to Use**: Just run the script and it does the rest
+---
 
-## Requirements
+## Requisitos
 
-- Python 3.6 or higher (no additional dependencies required)
+- Windows 10 / 11
+- `uv` instalado
+- Python **3.12**
 
-## Installation
+---
 
-1. Clone this repository:
+## Instalación (una sola vez)
+
+Desde la carpeta raíz del proyecto (donde está `pyproject.toml`):
+
 ```bash
-git clone https://github.com/Emma-Ok/time-report.git
-cd time-report
-```
+uv python install 3.12
+uv venv --python 3.12
+````
 
-2. Make the script executable (optional, on Unix/Linux/Mac):
+Esto fija el proyecto a Python 3.12.
+
+---
+
+## Uso diario (flujo recomendado)
+
+### 1. Abrir terminal
+
+* Abre **Windows Terminal** o **PowerShell**
+* Navega a la carpeta del proyecto `worklog/`
+
+### 2. Ejecutar el worklog
+
+Cada 60 minutos, con notificación:
+
 ```bash
-chmod +x time_report.py
+uv run worklog --minutes 60 --notify --tags "azure-devops"
 ```
 
-## Usage
+Para que pida registro inmediatamente al iniciar:
 
-### Run Continuously (Recommended)
-This mode will prompt you every hour to log your activities:
 ```bash
-python time_report.py
+uv run worklog --minutes 60 --notify --immediate --tags "azure-devops"
 ```
 
-The script will:
-1. Prompt you immediately for your current activity
-2. Wait for one hour
-3. Prompt you again
-4. Repeat until you stop it (Ctrl+C)
+**Recomendación:** ejecútalo alrededor de las **07:00 a.m.** y déjalo abierto.
+Fuera del horario laboral el programa se pausa solo y se reactiva el siguiente día hábil.
 
-### Log a Single Entry
-If you just want to log one activity and exit:
+---
+
+## Controles dentro del programa
+
+En cada bloque de tiempo aparecerán las siguientes opciones:
+
+* **Enter** → Registrar actividad (permite texto multilínea; termina con una línea vacía)
+* **s** → Skip (registra el bloque sin actividad)
+* **b** → Break (descanso)
+* **q** → Salir guardando y exportando Markdown
+
+### Sprint mode (atajos)
+
+Si ya hay actividades registradas en el día:
+
+* **r** → Repetir la última actividad (con opción de editar)
+* **1..9** → Elegir una actividad reciente y reutilizarla (con opción de editar)
+
+---
+
+## Archivos generados
+
+Los archivos se crean automáticamente en la carpeta `logs/`:
+
+* `logs/YYYY-MM-DD_worklog.jsonl`
+  Fuente de verdad, estructurada (para futuros análisis).
+
+* `logs/YYYY-MM-DD_worklog.csv`
+  Compatible con Excel.
+
+* `logs/YYYY-MM-DD_worklog.md`
+  Markdown listo para copiar y pegar en Azure DevOps.
+
+El archivo Markdown incluye:
+
+* Total de minutos y horas trabajadas
+* Resumen por tags
+* Tabla cronológica con todas las actividades
+
+---
+
+## Configuración útil (flags)
+
+Cambiar intervalo a 30 minutos:
+
 ```bash
-python time_report.py --once
+uv run worklog --minutes 30 --notify
 ```
 
-### Display Help
-To see all available options:
+Cambiar horario laboral:
+
 ```bash
-python time_report.py --help
+uv run worklog --start 07:00 --end 17:00 --minutes 60 --notify
 ```
 
-## Example
+Cambiar timezone:
 
-When you run the script, you'll see:
-```
-============================================================
-⏰ TIME REPORT - Hourly Check-in
-============================================================
-Current time: 2026-02-01 14:32:15
-
-What have you been working on this hour?
-(Enter your activity below, press Enter when done)
-------------------------------------------------------------
-> Implemented the time report script and tested functionality
-
-✓ Activity logged successfully to time_report_2026-02-01.log
-
-⏳ Waiting for next hour...
-Next check-in at: 15:32
+```bash
+uv run worklog --tz America/Bogota --minutes 60 --notify
 ```
 
-## Log File Format
+Cambiar carpeta de salida:
 
-Activities are saved to a daily log file with the format: `time_report_YYYY-MM-DD.log`
-
-Example log file content:
-```
-[2026-02-01 14:32:15] Implemented the time report script and tested functionality
-[2026-02-01 15:32:20] Code review and bug fixes for the authentication module
-[2026-02-01 16:32:18] Team meeting and sprint planning
+```bash
+uv run worklog --base-dir "C:\Users\TU_USUARIO\Documents\worklog-logs" --minutes 60 --notify
 ```
 
-## Tips
+---
 
-- Keep the script running in a terminal window throughout your workday
-- Be consistent with your entries to build an accurate work log
-- Review your log files at the end of the day for time reporting
-- Use clear, concise descriptions of your activities
+## Notificaciones en Windows
 
-## Stopping the Script
+El programa intenta mostrar una notificación en este orden:
 
-Press `Ctrl+C` to stop the script gracefully. Your logged activities will be saved.
+1. **Toast notification** usando el módulo de PowerShell `BurntToast` (si está instalado).
+2. **MessageBox** como fallback.
 
-## License
+### Instalar BurntToast (opcional, recomendado)
 
-This project is open source and available for anyone to use and modify.
+En PowerShell, una sola vez:
+
+```powershell
+Install-Module BurntToast -Scope CurrentUser
+```
+
+Si no se instala, el programa sigue funcionando normalmente.
+
+---
+
+## Troubleshooting
+
+### El comando `worklog` no se reconoce
+
+Asegúrate de ejecutar siempre usando `uv` y desde la carpeta del proyecto:
+
+```bash
+uv run worklog --minutes 60
+```
+
+### No se generan archivos
+
+Verifica permisos de escritura en la carpeta del proyecto.
+Por defecto, los logs se crean en `logs/`.
+
+### Se cerró la terminal accidentalmente
+
+El Markdown se exporta en cada bloque y al salir.
+Revisa el archivo correspondiente en `logs/YYYY-MM-DD_worklog.md`.
+
+---
+
+## Ejemplo recomendado para el día a día
+
+Inicio de jornada (07:00):
+
+```bash
+uv run worklog --minutes 60 --notify --immediate --tags "azure-devops"
+```
+
+Fin de jornada:
+
+* En el siguiente bloque, presiona **q**
+* Copia el contenido de `logs/YYYY-MM-DD_worklog.md` y pégalo en tu reporte
+
+---
+
+## Nota final
+
+Este proyecto está pensado para ser:
+
+* Simple de usar todos los días
+* Predecible (sin automatismos peligrosos)
+* Fácil de mantener y extender
+
+Si más adelante necesitas exportes semanales o formatos específicos para Azure DevOps,
+solo hay que extender el módulo `exporter.py`.
+
+```
+```
