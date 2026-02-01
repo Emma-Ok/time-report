@@ -1,19 +1,20 @@
-````md
+
 # worklog
 
-Herramienta de consola para registrar tus actividades por bloques de tiempo, pensada para el uso diario
-y para facilitar el reporte de horas en Azure DevOps.
+Herramienta de consola para registrar actividades laborales por bloques de tiempo.
+Pensada para uso diario y para facilitar el reporte de horas en **Azure DevOps**.
 
-- Control de jornada: **L–V, 07:00–17:00** (por defecto)
-- Timezone: **America/Bogota**
-- Exporta: **JSONL (fuente), CSV (Excel), Markdown (copy/paste)**
+- 🕘 Jornada laboral por defecto: **L–V, 07:00–17:00**
+- 🌎 Timezone por defecto: **America/Bogota**
+- ⏱️ Registro por intervalos configurables
+- 📤 Exporta: **JSONL (fuente), CSV (Excel), Markdown (copy/paste)**
 
 ---
 
 ## Requisitos
 
 - Windows 10 / 11
-- `uv` instalado
+- [`uv`](https://github.com/astral-sh/uv) instalado
 - Python **3.12**
 
 ---
@@ -25,9 +26,10 @@ Desde la carpeta raíz del proyecto (donde está `pyproject.toml`):
 ```bash
 uv python install 3.12
 uv venv --python 3.12
+uv pip install -e .
 ````
 
-Esto fija el proyecto a Python 3.12.
+Esto crea el entorno virtual y registra el comando `worklog`.
 
 ---
 
@@ -36,42 +38,45 @@ Esto fija el proyecto a Python 3.12.
 ### 1. Abrir terminal
 
 * Abre **Windows Terminal** o **PowerShell**
-* Navega a la carpeta del proyecto `worklog/`
+* Navega a la carpeta del proyecto `time-report/`
 
-### 2. Ejecutar el worklog
+### 2. Iniciar la jornada laboral
 
-Cada 60 minutos, con notificación:
-
-```bash
-uv run worklog --minutes 60 --notify --tags "azure-devops"
-```
-
-Para que pida registro inmediatamente al iniciar:
+Ejecuta este comando **al comenzar tu día (ej. lunes 7:00 a.m.)**:
 
 ```bash
-uv run worklog --minutes 60 --notify --immediate --tags "azure-devops"
+uv run worklog run --minutes 60 --notify --immediate --tags "azure-devops"
 ```
 
-**Recomendación:** ejecútalo alrededor de las **07:00 a.m.** y déjalo abierto.
-Fuera del horario laboral el programa se pausa solo y se reactiva el siguiente día hábil.
+### Qué hace este comando
+
+* ⏱️ Registra actividades cada **60 minutos**
+* 🔔 Muestra **notificación** en cada bloque
+* ▶️ Pide el primer registro **de inmediato**
+* 🗓️ Solo opera **lunes a viernes**
+* 📁 Guarda los archivos del día en `logs/`
+
+Déjalo ejecutándose durante el día.
+Fuera del horario laboral, el programa se pausa automáticamente.
 
 ---
 
 ## Controles dentro del programa
 
-En cada bloque de tiempo aparecerán las siguientes opciones:
+En cada bloque de tiempo (tick) aparecerán estas opciones:
 
-* **Enter** → Registrar actividad (permite texto multilínea; termina con una línea vacía)
-* **s** → Skip (registra el bloque sin actividad)
+* **Enter** → Registrar una nueva actividad
+  (permite texto multilínea; termina con una línea vacía)
+* **s** → Skip (bloque sin actividad)
 * **b** → Break (descanso)
-* **q** → Salir guardando y exportando Markdown
+* **q** → Salir guardando y exportando el reporte
 
 ### Sprint mode (atajos)
 
 Si ya hay actividades registradas en el día:
 
 * **r** → Repetir la última actividad (con opción de editar)
-* **1..9** → Elegir una actividad reciente y reutilizarla (con opción de editar)
+* **1..9** → Reutilizar una actividad reciente (con opción de editar)
 
 ---
 
@@ -80,7 +85,7 @@ Si ya hay actividades registradas en el día:
 Los archivos se crean automáticamente en la carpeta `logs/`:
 
 * `logs/YYYY-MM-DD_worklog.jsonl`
-  Fuente de verdad, estructurada (para futuros análisis).
+  Fuente estructurada (historial completo).
 
 * `logs/YYYY-MM-DD_worklog.csv`
   Compatible con Excel.
@@ -88,11 +93,48 @@ Los archivos se crean automáticamente en la carpeta `logs/`:
 * `logs/YYYY-MM-DD_worklog.md`
   Markdown listo para copiar y pegar en Azure DevOps.
 
-El archivo Markdown incluye:
+El archivo Markdown diario incluye:
 
-* Total de minutos y horas trabajadas
+* Total de minutos y horas
 * Resumen por tags
-* Tabla cronológica con todas las actividades
+* Tabla cronológica de actividades
+
+---
+
+## Resumen semanal
+
+El sistema puede generar un **reporte semanal consolidado**.
+
+### Generar resumen de la semana actual
+
+```bash
+uv run worklog summary --week current
+```
+
+### Generar resumen de una semana específica
+
+```bash
+uv run worklog summary --week 2026-W06
+```
+
+### Incluir detalle completo (tabla por entrada)
+
+```bash
+uv run worklog summary --week current --details
+```
+
+El archivo se genera en:
+
+```
+logs/weekly/YYYY-Www_summary.md
+```
+
+Incluye:
+
+* Total semanal de horas
+* Totales por día
+* Totales por tags
+* (Opcional) detalle cronológico completo
 
 ---
 
@@ -101,45 +143,50 @@ El archivo Markdown incluye:
 Cambiar intervalo a 30 minutos:
 
 ```bash
-uv run worklog --minutes 30 --notify
+uv run worklog run --minutes 30 --notify
 ```
 
 Cambiar horario laboral:
 
 ```bash
-uv run worklog --start 07:00 --end 17:00 --minutes 60 --notify
+uv run worklog run --start 08:00 --end 17:00 --minutes 60 --notify
 ```
 
 Cambiar timezone:
 
 ```bash
-uv run worklog --tz America/Bogota --minutes 60 --notify
+uv run worklog run --tz America/Bogota
 ```
 
 Cambiar carpeta de salida:
 
 ```bash
-uv run worklog --base-dir "C:\Users\TU_USUARIO\Documents\worklog-logs" --minutes 60 --notify
+uv run worklog run --base-dir "C:\Users\TU_USUARIO\Documents\worklog-logs"
 ```
 
 ---
 
 ## Notificaciones en Windows
 
-El programa intenta mostrar una notificación en este orden:
+El programa intenta mostrar notificaciones en este orden:
 
-1. **Toast notification** usando el módulo de PowerShell `BurntToast` (si está instalado).
-2. **MessageBox** como fallback.
+1. **Toast Notification** usando el módulo de PowerShell `BurntToast` (si está instalado)
+2. **MessageBox** como alternativa
 
 ### Instalar BurntToast (opcional, recomendado)
 
-En PowerShell, una sola vez:
+En PowerShell (una sola vez):
 
 ```powershell
 Install-Module BurntToast -Scope CurrentUser
 ```
 
-Si no se instala, el programa sigue funcionando normalmente.
+---
+
+## Salir del programa
+
+Presiona **Ctrl+C** en cualquier momento para salir de forma limpia.
+El sistema exporta el Markdown antes de cerrarse, sin mostrar errores ni trazas.
 
 ---
 
@@ -147,49 +194,34 @@ Si no se instala, el programa sigue funcionando normalmente.
 
 ### El comando `worklog` no se reconoce
 
-Asegúrate de ejecutar siempre usando `uv` y desde la carpeta del proyecto:
+Asegúrate de:
 
-```bash
-uv run worklog --minutes 60
-```
+* Estar en la carpeta raíz del proyecto
+* Haber ejecutado `uv pip install -e .`
 
 ### No se generan archivos
 
-Verifica permisos de escritura en la carpeta del proyecto.
-Por defecto, los logs se crean en `logs/`.
+Verifica permisos de escritura y que exista la carpeta `logs/`.
 
-### Se cerró la terminal accidentalmente
+### Está “fuera de horario”
 
-El Markdown se exporta en cada bloque y al salir.
-Revisa el archivo correspondiente en `logs/YYYY-MM-DD_worklog.md`.
+Es el comportamiento esperado fuera de lunes a viernes o fuera del rango configurado.
+El programa se duerme hasta el siguiente inicio válido.
 
 ---
 
-## Ejemplo recomendado para el día a día
+## Ejemplo completo de uso diario
 
-Inicio de jornada (07:00):
+Inicio de jornada (lunes 7:00 a.m.):
 
 ```bash
-uv run worklog --minutes 60 --notify --immediate --tags "azure-devops"
+uv run worklog run --minutes 60 --notify --immediate --tags "azure-devops"
 ```
 
 Fin de jornada:
 
-* En el siguiente bloque, presiona **q**
+* En el siguiente prompt escribe **q**
 * Copia el contenido de `logs/YYYY-MM-DD_worklog.md` y pégalo en tu reporte
 
----
 
-## Nota final
 
-Este proyecto está pensado para ser:
-
-* Simple de usar todos los días
-* Predecible (sin automatismos peligrosos)
-* Fácil de mantener y extender
-
-Si más adelante necesitas exportes semanales o formatos específicos para Azure DevOps,
-solo hay que extender el módulo `exporter.py`.
-
-```
-```
