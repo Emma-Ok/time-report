@@ -1,4 +1,14 @@
 import subprocess
+import shutil
+import logging
+
+logger = logging.getLogger(__name__)
+
+def _find_powershell() -> str | None:
+    for exe in ("powershell", "powershell.exe", "pwsh", "pwsh.exe"):
+        if shutil.which(exe):
+            return exe
+    return None
 
 def notify_windows(title: str, body: str) -> None:
     """
@@ -19,9 +29,14 @@ def notify_windows(title: str, body: str) -> None:
     }}
     """.strip()
 
+    ps_exe = _find_powershell()
+    if not ps_exe:
+      logger.warning("PowerShell not found; notifications disabled.")
+        return
+
     try:
         r = subprocess.run(
-            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_toast],
+            [ps_exe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_toast],
             capture_output=True,
             text=True,
             timeout=4
@@ -29,7 +44,7 @@ def notify_windows(title: str, body: str) -> None:
         if r.returncode == 0:
             return
     except Exception:
-        pass
+      logger.exception("Toast notification failed.")
 
     ps_msg = f"""
     Add-Type -AssemblyName PresentationFramework
@@ -37,6 +52,7 @@ def notify_windows(title: str, body: str) -> None:
     """.strip()
 
     try:
-        subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_msg])
+        subprocess.Popen([ps_exe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-STA", "-Command", ps_msg])
     except Exception:
-        return
+      logger.exception("Fallback MessageBox notification failed.")
+      return

@@ -11,6 +11,9 @@ class RunConfig:
     notify: bool
     immediate: bool
     tz_name: str
+    break_start: str
+    break_end: str
+    break_enabled: bool
 
 @dataclass(frozen=True)
 class SummaryConfig:
@@ -30,9 +33,13 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--start", type=str, default="07:00", help="Inicio jornada HH:MM (default: 07:00).")
     pr.add_argument("--end", type=str, default="17:00", help="Fin jornada HH:MM (default: 17:00).")
     pr.add_argument("--tags", type=str, default="", help="Tags por defecto (ej: ado,backend,meetings).")
-    pr.add_argument("--notify", action="store_true", help="Notificación en cada tick.")
+    pr.add_argument("--notify", dest="notify", action="store_true", default=True, help="Notificación en cada tick (default: activado).")
+    pr.add_argument("--no-notify", dest="notify", action="store_false", help="Desactiva notificaciones.")
     pr.add_argument("--immediate", action="store_true", help="Pide registro inmediatamente al iniciar.")
     pr.add_argument("--tz", type=str, default="America/Bogota", help="Timezone IANA (default: America/Bogota).")
+    pr.add_argument("--break-start", type=str, default="13:00", help="Inicio de break HH:MM (default: 13:00).")
+    pr.add_argument("--break-end", type=str, default="14:00", help="Fin de break HH:MM (default: 14:00).")
+    pr.add_argument("--no-break", dest="break_enabled", action="store_false", default=True, help="Desactiva el break automático.")
 
     # summary
     ps = sub.add_parser("summary", help="Generar resumen semanal")
@@ -58,6 +65,9 @@ def parse_args():
             notify=bool(a.notify),
             immediate=bool(a.immediate),
             tz_name=a.tz,
+            break_start=a.break_start,
+            break_end=a.break_end,
+            break_enabled=bool(a.break_enabled),
         )
 
     # summary

@@ -1,5 +1,6 @@
 import time
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
 
 from dataclasses import dataclass
 from zoneinfo import ZoneInfo
@@ -27,6 +28,8 @@ from .ui import (
 )
 from .notifier import notify_windows
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class RuntimeState:
@@ -34,6 +37,8 @@ class RuntimeState:
     tick_start: datetime
     next_tick: float
     last_activities: list[str]
+    break_start: tuple[int, int] | None
+    break_end: tuple[int, int] | None
 
 
 # -------------------------
@@ -44,6 +49,14 @@ def _build_window(cfg: RunConfig) -> WorkWindow:
     sh, sm = parse_hhmm(cfg.start)
     eh, em = parse_hhmm(cfg.end)
     return WorkWindow(sh, sm, eh, em)
+
+
+def _build_break_window(cfg: RunConfig) -> tuple[tuple[int, int] | None, tuple[int, int] | None]:
+    if not cfg.break_enabled:
+        return None, None
+    bh, bm = parse_hhmm(cfg.break_start)
+    eh, em = parse_hhmm(cfg.break_end)
+    return (bh, bm), (eh, em)
 
 
 def _current_day(tz: ZoneInfo) -> str:
@@ -68,7 +81,9 @@ def _print_banner(cfg: RunConfig, paths: dict) -> None:
     print(f"📁   MD: {paths['md']}")
     print(f"🕘 Horario: L–V {cfg.start}–{cfg.end}")
     print(f"⏱️ Intervalo: {cfg.minutes} min")
+    print(f"🔔 Notificaciones: {'ON' if cfg.notify else 'OFF'}")
     print("🛑 Salir: Ctrl+C\n")
+    logger.info("Run started: tz=%s start=%s end=%s minutes=%s", cfg.tz_name, cfg.start, cfg.end, cfg.minutes)
 
 
 def _sleep_until_next_work_start(tz: ZoneInfo, window: WorkWindow) -> None:
@@ -101,12 +116,15 @@ def _init_state(cfg: RunConfig, tz: ZoneInfo, window: WorkWindow) -> RuntimeStat
     tick_start = now(tz)
     interval_seconds = cfg.minutes * 60
     next_tick = time.time() + (0 if cfg.immediate else interval_seconds)
+    break_start, break_end = _build_break_window(cfg)
 
     return RuntimeState(
         paths=paths,
         tick_start=tick_start,
         next_tick=next_tick,
         last_activities=last_activities,
+        break_start=break_start,
+        break_end=break_end,
     )
 
 
@@ -127,6 +145,7 @@ def _rotate_if_new_day(cfg: RunConfig, tz: ZoneInfo, state: RuntimeState) -> Non
     state.last_activities = _load_sprint_activities(state.paths["jsonl"])
 
     print(f"\n📆 Nuevo día detectado: {day}. Rotando logs.")
+    logger.info("Rotated logs to day=%s", day)
 
 
 def _ensure_work_time_or_sleep(cfg: RunConfig, tz: ZoneInfo, window: WorkWindow, state: RuntimeState) -> None:
@@ -165,8 +184,26 @@ def _notify_if_enabled(cfg: RunConfig, tick_start: datetime, tick_end: datetime)
     )
 
 
+def _is_break_block(state: RuntimeState, tick_start: datetime, tick_end: datetime) -> bool:
+    if not state.break_start or not state.break_end:
+        return False
+    bs_h, bs_m = state.break_start
+    be_h, be_m = state.break_end
+    break_start_dt = tick_start.replace(hour=bs_h, minute=bs_m, second=0, microsecond=0)
+    break_end_dt = tick_start.replace(hour=be_h, minute=be_m, second=0, microsecond=0)
+    return tick_start >= break_start_dt and tick_end <= break_end_dt
+
+
 def _collect_activity(choice: str, last_activities: list[str]) -> str:
+    normalized = choice.strip().lower()
+
+    if normalized and normalized not in ("s", "b", "r") and not normalized.isdigit():
+        return choice.strip() or "(sin detalle)"
+
     picked = choose_activity(choice, last_activities)
+
+    if normalized in ("s", "b"):
+        return picked.strip() or "(sin detalle)"
 
     if not picked and choice not in ("s", "b"):
         picked = prompt_multiline("Describe lo que hiciste (multilínea):")
@@ -193,16 +230,34 @@ def _persist_and_export(state: RuntimeState, entry: Entry) -> None:
     storage.append_csv(state.paths["csv"], entry)
     export_markdown(state.paths["md"], storage.read_jsonl(state.paths["jsonl"]))
     print("💾 Guardado + Markdown actualizado.\n")
+    logger.info("Saved entry: %s %s-%s (%s min)", entry.date, entry.start, entry.end, entry.minutes)
+
+
+def _persist_entries(state: RuntimeState, entries: list[Entry]) -> None:
+    for entry in entries:
+        storage.append_jsonl(state.paths["jsonl"], entry)
+        storage.append_csv(state.paths["csv"], entry)
+    export_markdown(state.paths["md"], storage.read_jsonl(state.paths["jsonl"]))
+    print("💾 Guardado + Markdown actualizado.\n")
+    for entry in entries:
+        logger.info("Saved entry: %s %s-%s (%s min)", entry.date, entry.start, entry.end, entry.minutes)
 
 
 def _handle_tick(cfg: RunConfig, tz: ZoneInfo, state: RuntimeState) -> bool:
     tick_end = now(tz)
     _notify_if_enabled(cfg, state.tick_start, tick_end)
 
+    if _is_break_block(state, state.tick_start, tick_end):
+        entry = _build_entry(state.tick_start, tick_end, "(break / descanso)", "")
+        _persist_and_export(state, entry)
+        state.tick_start = tick_end
+        state.next_tick = time.time() + (cfg.minutes * 60)
+        return True
+
     block_minutes = max(1, int((tick_end - state.tick_start).total_seconds() / 60))
     print("=" * 70)
     print(f"🕒 Bloque: {state.tick_start.strftime('%H:%M')}–{tick_end.strftime('%H:%M')} ({block_minutes} min)")
-    print("Opciones: [Enter]=nuevo  /  (s)=skip  /  (b)=break  /  (q)=salir")
+    print("Opciones: [Enter]=nuevo o escribe la actividad  /  (s)=skip  /  (b)=break  /  (q)=salir")
     sprint_menu(state.last_activities)
 
     choice = input("> ").strip().lower()
@@ -214,10 +269,30 @@ def _handle_tick(cfg: RunConfig, tz: ZoneInfo, state: RuntimeState) -> bool:
     activity = _collect_activity(choice, state.last_activities)
     tags = ask_tags(cfg.tags)
 
-    entry = _build_entry(state.tick_start, tick_end, activity, tags)
+    entries: list[Entry] = []
+    if block_minutes > cfg.minutes:
+        print(f"⚠️ Han pasado {block_minutes} min desde el último registro.")
+        print("Opciones: (1)=un solo bloque  /  (2)=repetir esta actividad en bloques")
+        split_choice = input("> ").strip()
+        if split_choice == "2":
+            current = state.tick_start
+            delta = timedelta(minutes=cfg.minutes)
+            while current + delta <= tick_end:
+                entries.append(_build_entry(current, current + delta, activity, tags))
+                current += delta
+            if current < tick_end:
+                entries.append(_build_entry(current, tick_end, activity, tags))
+        else:
+            entries.append(_build_entry(state.tick_start, tick_end, activity, tags))
+    else:
+        entries.append(_build_entry(state.tick_start, tick_end, activity, tags))
+
     state.last_activities = update_sprint(state.last_activities, activity)
 
-    _persist_and_export(state, entry)
+    if len(entries) == 1:
+        _persist_and_export(state, entries[0])
+    else:
+        _persist_entries(state, entries)
 
     # avanzar ventana
     state.tick_start = tick_end

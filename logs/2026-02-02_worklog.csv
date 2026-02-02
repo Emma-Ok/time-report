@@ -1,0 +1,10 @@
+date,start,end,minutes,activity,tags
+2026-02-02,2026-02-02T07:34:45-05:00,2026-02-02T07:34:45-05:00,1,(sin detalle),azure-devops
+2026-02-02,2026-02-02T07:34:45-05:00,2026-02-02T08:35:21-05:00,60,reunión con simon,azure-devops
+2026-02-02,2026-02-02T08:35:21-05:00,2026-02-02T09:35:59-05:00,60,(sin detalle),azure-devops
+2026-02-02,2026-02-02T09:35:59-05:00,2026-02-02T10:36:38-05:00,60,(sin detalle),azure-devops
+2026-02-02,2026-02-02T10:36:38-05:00,2026-02-02T11:37:09-05:00,60,reunión con simon,azure-devops
+2026-02-02,2026-02-02T12:02:17-05:00,2026-02-02T12:02:17-05:00,1,re ejecución de pruebas,azure-devops
+2026-02-02,2026-02-02T12:02:17-05:00,2026-02-02T13:02:47-05:00,60,(break / descanso),azure-devops
+2026-02-02,2026-02-02T13:02:47-05:00,2026-02-02T14:04:43-05:00,61,re ejecución pruebas de seguridad,azure-devops
+2026-02-02,2026-02-02T14:04:43-05:00,2026-02-02T16:06:17-05:00,121,pruebas de certificados,azure-devops

@@ -1,0 +1,9 @@
+{"date": "2026-02-02", "start": "2026-02-02T07:34:45-05:00", "end": "2026-02-02T07:34:45-05:00", "minutes": 1, "activity": "(sin detalle)", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T07:34:45-05:00", "end": "2026-02-02T08:35:21-05:00", "minutes": 60, "activity": "reunión con simon", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T08:35:21-05:00", "end": "2026-02-02T09:35:59-05:00", "minutes": 60, "activity": "(sin detalle)", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T09:35:59-05:00", "end": "2026-02-02T10:36:38-05:00", "minutes": 60, "activity": "(sin detalle)", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T10:36:38-05:00", "end": "2026-02-02T11:37:09-05:00", "minutes": 60, "activity": "reunión con simon", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T12:02:17-05:00", "end": "2026-02-02T12:02:17-05:00", "minutes": 1, "activity": "re ejecución de pruebas", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T12:02:17-05:00", "end": "2026-02-02T13:02:47-05:00", "minutes": 60, "activity": "(break / descanso)", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T13:02:47-05:00", "end": "2026-02-02T14:04:43-05:00", "minutes": 61, "activity": "re ejecución pruebas de seguridad", "tags": "azure-devops"}
+{"date": "2026-02-02", "start": "2026-02-02T14:04:43-05:00", "end": "2026-02-02T16:06:17-05:00", "minutes": 121, "activity": "pruebas de certificados", "tags": "azure-devops"}

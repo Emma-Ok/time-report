@@ -1,8 +1,12 @@
 import os
 import csv
 import json
+import logging
+from dataclasses import asdict
 from typing import List
 from .domain import Entry
+
+logger = logging.getLogger(__name__)
 
 def ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
@@ -24,7 +28,7 @@ def init_csv_if_needed(path: str) -> None:
 
 def append_jsonl(path: str, entry: Entry) -> None:
     with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry.__dict__, ensure_ascii=False) + "\n")
+        f.write(json.dumps(asdict(entry), ensure_ascii=False) + "\n")
 
 def append_csv(path: str, entry: Entry) -> None:
     with open(path, "a", newline="", encoding="utf-8") as f:
@@ -40,6 +44,10 @@ def read_jsonl(path: str) -> List[Entry]:
             line = line.strip()
             if not line:
                 continue
-            d = json.loads(line)
-            out.append(Entry(**d))
+            try:
+                d = json.loads(line)
+                out.append(Entry(**d))
+            except Exception:
+                logger.warning("Invalid JSONL line ignored in %s", path)
+                continue
     return out

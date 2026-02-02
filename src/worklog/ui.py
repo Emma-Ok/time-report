@@ -51,7 +51,8 @@ def ask_tags(default_tags: str) -> str:
     return t if t else default_tags
 
 def update_sprint(last_activities: List[str], activity: str) -> List[str]:
-    if activity and activity not in last_activities:
+    skip_values = {"(sin detalle)", "(sin registro / skip)", "(break / descanso)"}
+    if activity and activity not in last_activities and activity not in skip_values:
         last_activities.append(activity)
     if len(last_activities) > 9:
         last_activities = last_activities[-9:]
