@@ -23,12 +23,17 @@ from .ui import (
     sprint_menu,
     choose_activity,
     maybe_edit,
-    ask_tags,
     update_sprint,
 )
 from .notifier import notify_windows
 
 logger = logging.getLogger(__name__)
+DEFAULT_ACTIVITY = "(sin detalle)"
+
+try:
+    import msvcrt
+except Exception:
+    msvcrt = None
 
 
 @dataclass
@@ -171,17 +176,63 @@ def _ensure_work_time_or_sleep(cfg: RunConfig, tz: ZoneInfo, window: WorkWindow,
 
 
 
-def _should_tick(state: RuntimeState) -> bool:
-    return time.time() >= state.next_tick
+def _should_tick(cfg: RunConfig, tz: ZoneInfo, state: RuntimeState) -> bool:
+    return now(tz) >= state.tick_start + timedelta(minutes=cfg.minutes)
 
 
-def _notify_if_enabled(cfg: RunConfig, tick_start: datetime, tick_end: datetime) -> None:
+def _notify_if_enabled(cfg: RunConfig, tz: ZoneInfo, tick_start: datetime, tick_end: datetime) -> None:
     if not cfg.notify:
         return
+
+    lag_seconds = (now(tz) - tick_end).total_seconds()
+    if lag_seconds > 90:
+        return
+
     notify_windows(
         "Worklog",
         f"Registrar actividad ({tick_start.strftime('%H:%M')}–{tick_end.strftime('%H:%M')})",
     )
+
+
+def _input_with_timeout(prompt: str, timeout_seconds: int, default: str = "") -> tuple[str, bool]:
+    if timeout_seconds <= 0 or msvcrt is None:
+        return input(prompt), False
+
+    print(prompt, end="", flush=True)
+    chars: list[str] = []
+    deadline = time.time() + timeout_seconds
+
+    while time.time() < deadline:
+        value, is_done = _consume_keyboard_input(chars)
+        if is_done:
+            print("")
+            return value, False
+        time.sleep(0.05)
+
+    print("")
+    return default, True
+
+
+def _consume_keyboard_input(chars: list[str]) -> tuple[str, bool]:
+    if not msvcrt or not msvcrt.kbhit():
+        return "", False
+
+    ch = msvcrt.getwche()
+    if ch in ("\r", "\n"):
+        return "".join(chars), True
+    if ch == "\003":
+        raise KeyboardInterrupt
+    if ch in ("\x00", "\xe0"):
+        if msvcrt.kbhit():
+            msvcrt.getwche()
+        return "", False
+    if ch == "\b":
+        if chars:
+            chars.pop()
+        return "", False
+
+    chars.append(ch)
+    return "", False
 
 
 def _is_break_block(state: RuntimeState, tick_start: datetime, tick_end: datetime) -> bool:
@@ -191,26 +242,26 @@ def _is_break_block(state: RuntimeState, tick_start: datetime, tick_end: datetim
     be_h, be_m = state.break_end
     break_start_dt = tick_start.replace(hour=bs_h, minute=bs_m, second=0, microsecond=0)
     break_end_dt = tick_start.replace(hour=be_h, minute=be_m, second=0, microsecond=0)
-    return tick_start >= break_start_dt and tick_end <= break_end_dt
+    return tick_start < break_end_dt and tick_end > break_start_dt
 
 
 def _collect_activity(choice: str, last_activities: list[str]) -> str:
     normalized = choice.strip().lower()
 
     if normalized and normalized not in ("s", "b", "r") and not normalized.isdigit():
-        return choice.strip() or "(sin detalle)"
+        return choice.strip() or DEFAULT_ACTIVITY
 
     picked = choose_activity(choice, last_activities)
 
     if normalized in ("s", "b"):
-        return picked.strip() or "(sin detalle)"
+        return picked.strip() or DEFAULT_ACTIVITY
 
     if not picked and choice not in ("s", "b"):
         picked = prompt_multiline("Describe lo que hiciste (multilínea):")
     else:
         picked = maybe_edit(picked)
 
-    return picked.strip() or "(sin detalle)"
+    return picked.strip() or DEFAULT_ACTIVITY
 
 
 def _build_entry(tick_start, tick_end, activity: str, tags: str) -> Entry:
@@ -233,25 +284,15 @@ def _persist_and_export(state: RuntimeState, entry: Entry) -> None:
     logger.info("Saved entry: %s %s-%s (%s min)", entry.date, entry.start, entry.end, entry.minutes)
 
 
-def _persist_entries(state: RuntimeState, entries: list[Entry]) -> None:
-    for entry in entries:
-        storage.append_jsonl(state.paths["jsonl"], entry)
-        storage.append_csv(state.paths["csv"], entry)
-    export_markdown(state.paths["md"], storage.read_jsonl(state.paths["jsonl"]))
-    print("💾 Guardado + Markdown actualizado.\n")
-    for entry in entries:
-        logger.info("Saved entry: %s %s-%s (%s min)", entry.date, entry.start, entry.end, entry.minutes)
-
-
 def _handle_tick(cfg: RunConfig, tz: ZoneInfo, state: RuntimeState) -> bool:
-    tick_end = now(tz)
-    _notify_if_enabled(cfg, state.tick_start, tick_end)
+    tick_end = state.tick_start + timedelta(minutes=cfg.minutes)
+    _notify_if_enabled(cfg, tz, state.tick_start, tick_end)
 
     if _is_break_block(state, state.tick_start, tick_end):
         entry = _build_entry(state.tick_start, tick_end, "(break / descanso)", "")
         _persist_and_export(state, entry)
         state.tick_start = tick_end
-        state.next_tick = time.time() + (cfg.minutes * 60)
+        state.next_tick = time.time()
         return True
 
     block_minutes = max(1, int((tick_end - state.tick_start).total_seconds() / 60))
@@ -260,43 +301,38 @@ def _handle_tick(cfg: RunConfig, tz: ZoneInfo, state: RuntimeState) -> bool:
     print("Opciones: [Enter]=nuevo o escribe la actividad  /  (s)=skip  /  (b)=break  /  (q)=salir")
     sprint_menu(state.last_activities)
 
-    choice = input("> ").strip().lower()
+    choice_raw, timed_out = _input_with_timeout("> ", cfg.input_timeout_sec, default="")
+    choice = choice_raw.strip().lower()
+
+    if timed_out:
+        print(f"⏰ Sin respuesta. Se registrará automáticamente como '{DEFAULT_ACTIVITY}'.")
+        activity = DEFAULT_ACTIVITY
+        tags = cfg.tags
+        entry = _build_entry(state.tick_start, tick_end, activity, tags)
+        _persist_and_export(state, entry)
+        state.tick_start = tick_end
+        state.next_tick = time.time()
+        return True
+
     if choice == "q":
         export_markdown(state.paths["md"], storage.read_jsonl(state.paths["jsonl"]))
         print(f"👋 Cerrando. Markdown exportado: {state.paths['md']}")
         return False
 
     activity = _collect_activity(choice, state.last_activities)
-    tags = ask_tags(cfg.tags)
+    tags_raw, tags_timeout = _input_with_timeout(
+        f"Tags (Enter para '{cfg.tags}'): ", cfg.input_timeout_sec, default=cfg.tags
+    )
+    tags = cfg.tags if tags_timeout else (tags_raw.strip() or cfg.tags)
 
-    entries: list[Entry] = []
-    if block_minutes > cfg.minutes:
-        print(f"⚠️ Han pasado {block_minutes} min desde el último registro.")
-        print("Opciones: (1)=un solo bloque  /  (2)=repetir esta actividad en bloques")
-        split_choice = input("> ").strip()
-        if split_choice == "2":
-            current = state.tick_start
-            delta = timedelta(minutes=cfg.minutes)
-            while current + delta <= tick_end:
-                entries.append(_build_entry(current, current + delta, activity, tags))
-                current += delta
-            if current < tick_end:
-                entries.append(_build_entry(current, tick_end, activity, tags))
-        else:
-            entries.append(_build_entry(state.tick_start, tick_end, activity, tags))
-    else:
-        entries.append(_build_entry(state.tick_start, tick_end, activity, tags))
+    entry = _build_entry(state.tick_start, tick_end, activity, tags)
 
     state.last_activities = update_sprint(state.last_activities, activity)
-
-    if len(entries) == 1:
-        _persist_and_export(state, entries[0])
-    else:
-        _persist_entries(state, entries)
+    _persist_and_export(state, entry)
 
     # avanzar ventana
     state.tick_start = tick_end
-    state.next_tick = time.time() + (cfg.minutes * 60)
+    state.next_tick = time.time()
     return True
 
 
@@ -314,7 +350,7 @@ def run(cfg: RunConfig) -> None:
             _rotate_if_new_day(cfg, tz, state)
             _ensure_work_time_or_sleep(cfg, tz, window, state)
 
-            if _should_tick(state) and not _handle_tick(cfg, tz, state):
+            if _should_tick(cfg, tz, state) and not _handle_tick(cfg, tz, state):
                 return
 
             time.sleep(1)

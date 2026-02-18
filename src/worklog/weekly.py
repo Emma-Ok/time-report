@@ -3,7 +3,7 @@ from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 from typing import Dict, List
 
-from .storage import read_jsonl, ensure_dir
+from .storage import read_jsonl, read_csv, ensure_dir, paths_for_day, legacy_paths_for_day
 from .domain import Entry
 from .config import SummaryConfig
 
@@ -43,8 +43,26 @@ def _collect_week_entries(base_dir: str, days: List[date]) -> List[Entry]:
     entries: List[Entry] = []
     for d in days:
         day_str = d.strftime("%Y-%m-%d")
-        path = os.path.join(base_dir, f"{day_str}_worklog.jsonl")
-        entries.extend(read_jsonl(path))
+
+        day_paths = paths_for_day(base_dir, day_str)
+        jsonl_path = day_paths["jsonl"]
+        day_entries = read_jsonl(jsonl_path)
+        if day_entries:
+            entries.extend(day_entries)
+            continue
+
+        csv_entries = read_csv(day_paths["csv"])
+        if csv_entries:
+            entries.extend(csv_entries)
+            continue
+
+        legacy_paths = legacy_paths_for_day(base_dir, day_str)
+        legacy_jsonl_entries = read_jsonl(legacy_paths["jsonl"])
+        if legacy_jsonl_entries:
+            entries.extend(legacy_jsonl_entries)
+            continue
+
+        entries.extend(read_csv(legacy_paths["csv"]))
     return entries
 
 
@@ -125,7 +143,7 @@ def weekly_summary(cfg: SummaryConfig) -> None:
 
     entries = _collect_week_entries(cfg.base_dir, days)
 
-    out_dir = os.path.join(cfg.base_dir, "weekly")
+    out_dir = os.path.join(cfg.base_dir, "worklog_md", "weekly")
     ensure_dir(out_dir)
     out_path = os.path.join(out_dir, f"{label}_summary.md")
 

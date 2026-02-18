@@ -13,6 +13,21 @@ def ensure_dir(path: str) -> None:
 
 def paths_for_day(base_dir: str, day: str) -> dict:
     ensure_dir(base_dir)
+    csv_dir = os.path.join(base_dir, "worklog_csv")
+    json_dir = os.path.join(base_dir, "worklog_json")
+    md_dir = os.path.join(base_dir, "worklog_md")
+    ensure_dir(csv_dir)
+    ensure_dir(json_dir)
+    ensure_dir(md_dir)
+
+    return {
+        "jsonl": os.path.join(json_dir, f"{day}_worklog.jsonl"),
+        "csv":   os.path.join(csv_dir, f"{day}_worklog.csv"),
+        "md":    os.path.join(md_dir, f"{day}_worklog.md"),
+    }
+
+
+def legacy_paths_for_day(base_dir: str, day: str) -> dict:
     return {
         "jsonl": os.path.join(base_dir, f"{day}_worklog.jsonl"),
         "csv":   os.path.join(base_dir, f"{day}_worklog.csv"),
@@ -49,5 +64,29 @@ def read_jsonl(path: str) -> List[Entry]:
                 out.append(Entry(**d))
             except Exception:
                 logger.warning("Invalid JSONL line ignored in %s", path)
+                continue
+    return out
+
+
+def read_csv(path: str) -> List[Entry]:
+    if not os.path.exists(path):
+        return []
+    out: List[Entry] = []
+    with open(path, "r", newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        for row in r:
+            try:
+                out.append(
+                    Entry(
+                        date=(row.get("date") or "").strip(),
+                        start=(row.get("start") or "").strip(),
+                        end=(row.get("end") or "").strip(),
+                        minutes=int((row.get("minutes") or "0").strip() or "0"),
+                        activity=(row.get("activity") or "").strip(),
+                        tags=(row.get("tags") or "").strip(),
+                    )
+                )
+            except Exception:
+                logger.warning("Invalid CSV row ignored in %s", path)
                 continue
     return out

@@ -82,15 +82,15 @@ Si ya hay actividades registradas en el día:
 
 ## Archivos generados
 
-Los archivos se crean automáticamente en la carpeta `logs/`:
+Los archivos se crean automáticamente en la carpeta `logs/` con esta estructura:
 
-* `logs/YYYY-MM-DD_worklog.jsonl`
+* `logs/worklog_json/YYYY-MM-DD_worklog.jsonl`
   Fuente estructurada (historial completo).
 
-* `logs/YYYY-MM-DD_worklog.csv`
+* `logs/worklog_csv/YYYY-MM-DD_worklog.csv`
   Compatible con Excel.
 
-* `logs/YYYY-MM-DD_worklog.md`
+* `logs/worklog_md/YYYY-MM-DD_worklog.md`
   Markdown listo para copiar y pegar en Azure DevOps.
 
 El archivo Markdown diario incluye:
@@ -126,7 +126,7 @@ uv run worklog summary --week current --details
 El archivo se genera en:
 
 ```
-logs/weekly/YYYY-Www_summary.md
+logs/worklog_md/weekly/YYYY-Www_summary.md
 ```
 
 Incluye:
@@ -168,10 +168,10 @@ uv run worklog run --base-dir "C:\Users\TU_USUARIO\Documents\worklog-logs"
 
 ## Notificaciones en Windows
 
-El programa intenta mostrar notificaciones en este orden:
+El programa intenta mostrar notificaciones tipo Toast de Windows en este orden:
 
-1. **Toast Notification** usando el módulo de PowerShell `BurntToast` (si está instalado)
-2. **MessageBox** como alternativa
+1. **BurntToast** (si está instalado)
+2. **Toast WinRT nativo** como fallback
 
 ### Instalar BurntToast (opcional, recomendado)
 
@@ -221,7 +221,7 @@ uv run worklog run --minutes 60 --notify --immediate --tags "azure-devops"
 Fin de jornada:
 
 * En el siguiente prompt escribe **q**
-* Copia el contenido de `logs/YYYY-MM-DD_worklog.md` y pégalo en tu reporte
+* Copia el contenido de `logs/worklog_md/YYYY-MM-DD_worklog.md` y pégalo en tu reporte
 
 
 

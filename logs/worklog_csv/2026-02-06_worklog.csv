@@ -1,0 +1,12 @@
+date,start,end,minutes,activity,tags
+2026-02-06,2026-02-06T07:25:00-05:00,2026-02-06T07:25:00-05:00,1,"inicio de día, pruebas hacia po con solucionadores",azure-devops`
+2026-02-06,2026-02-06T07:25:00-05:00,2026-02-06T08:25:21-05:00,60,2. pruebas dirigidas hacia los solucionadores,azure-devops`
+2026-02-06,2026-02-06T08:25:21-05:00,2026-02-06T09:25:21-05:00,60,pruebas dirigidas hacia solucionador po y reunipón mesa de validación,azure-devops`
+2026-02-06,2026-02-06T09:25:21-05:00,2026-02-06T10:25:21-05:00,60,pruebas dirigidas hacia solucionador po y reunipón mesa de validación,azure-devops`
+2026-02-06,2026-02-06T10:25:21-05:00,2026-02-06T10:37:55-05:00,12,pruebas dirigidas hacia solucionador po y reunipón mesa de validación,azure-devops`
+2026-02-06,2026-02-06T10:37:55-05:00,2026-02-06T11:38:24-05:00,60,reunión mesa de validación de monitoreo,azure-devops`
+2026-02-06,2026-02-06T11:38:24-05:00,2026-02-06T12:38:54-05:00,60,5. solucionador-nlp con migue,azure-devops`
+2026-02-06,2026-02-06T12:38:54-05:00,2026-02-06T13:38:54-05:00,60,"lunch, resolviendo con migue solucionador-nlp",azure-devops`
+2026-02-06,2026-02-06T13:38:54-05:00,2026-02-06T14:04:11-05:00,25,"lunch, resolviendo con migue solucionador-nlp",azure-devops`
+2026-02-06,2026-02-06T14:04:11-05:00,2026-02-06T15:04:11-05:00,60,"lunch, resolviendo con migue solucionador-nlp",azure-devops`
+2026-02-06,2026-02-06T15:04:11-05:00,2026-02-06T15:55:50-05:00,51,"lunch, resolviendo con migue solucionador-nlp",azure-devops`

@@ -2,6 +2,8 @@
 
 Este proyecto expone el ejecutable `worklog` (definido en `pyproject.toml`) y dos subcomandos: `run` y `summary`.
 
+La CLI está implementada con **Typer** y la experiencia interactiva de consola usa **Rich**.
+
 ## 1) Ejecutar el worklog interactivo
 
 **Comando:**
@@ -11,6 +13,12 @@ Este proyecto expone el ejecutable `worklog` (definido en `pyproject.toml`) y do
 **Descripción:**
 
 Inicia el registro interactivo por bloques de tiempo. Cada intervalo solicita la actividad realizada y genera JSONL, CSV y Markdown en la carpeta de logs.
+
+Estructura de salida:
+
+- `logs/worklog_csv/`
+- `logs/worklog_json/`
+- `logs/worklog_md/`
 
 **Opciones disponibles:**
 
@@ -26,6 +34,7 @@ Inicia el registro interactivo por bloques de tiempo. Cada intervalo solicita la
 - `--break-start <HH:MM>`: Inicio de break automático (default: `13:00`)
 - `--break-end <HH:MM>`: Fin de break automático (default: `14:00`)
 - `--no-break`: Desactiva break automático
+- `--input-timeout <seg>`: Espera máxima por respuesta antes de auto-registrar (default: `120`)
 
 **Ejemplos:**
 
@@ -37,6 +46,7 @@ Inicia el registro interactivo por bloques de tiempo. Cada intervalo solicita la
 - `uv run worklog run --no-notify --minutes 60`
 - `uv run worklog run --break-start 12:30 --break-end 13:30`
 - `uv run worklog run --no-break`
+- `uv run worklog run --minutes 60 --input-timeout 30`
 
 ---
 
@@ -48,7 +58,7 @@ Inicia el registro interactivo por bloques de tiempo. Cada intervalo solicita la
 
 **Descripción:**
 
-Genera un resumen semanal en Markdown con totales por día y por tags. El archivo se guarda en `logs/weekly/`.
+Genera un resumen semanal en Markdown con totales por día y por tags. El archivo se guarda en `logs/worklog_md/weekly/`.
 
 **Opciones disponibles:**
 
@@ -73,6 +83,22 @@ Si pasó más de un intervalo desde el último registro, el sistema ofrece:
 - **2**: Repetir la misma actividad en bloques del tamaño del intervalo
 
 Esto evita perder horas si olvidaste registrar a tiempo.
+
+Si no respondes al prompt dentro del timeout, se registra automáticamente `"(sin detalle)"` con los tags por defecto.
+
+## Break automático (modo estricto)
+
+Cuando el break está habilitado, cualquier bloque que se cruce con la ventana de break se registra automáticamente como `(break / descanso)`.
+
+Ejemplo con valores por defecto:
+
+- Ventana break: `13:00` a `14:00`
+- Bloque `13:00–14:00` se registra como break automáticamente.
+
+## Notificaciones
+
+- Se evita el duplicado de notificaciones (throttle + deduplicación por contenido).
+- Se usa Toast de Windows (BurntToast si está disponible; fallback WinRT).
 
 ---
 

@@ -1,0 +1,11 @@
+date,start,end,minutes,activity,tags
+2026-02-03,2026-02-03T08:42:54-05:00,2026-02-03T08:42:54-05:00,1,probando extractos y reunión con simon de 8 - 9 am,azure-devops
+2026-02-03,2026-02-03T08:42:54-05:00,2026-02-03T09:43:22-05:00,60,daily con equipo prote,azure-devops
+2026-02-03,2026-02-03T09:43:22-05:00,2026-02-03T10:43:22-05:00,60,reunión de 2 horas para resolver dudas dirigidas al paso a producción 9:30 - 11am,azure-devops
+2026-02-03,2026-02-03T10:43:22-05:00,2026-02-03T11:08:58-05:00,25,reunión de 2 horas para resolver dudas dirigidas al paso a producción 9:30 - 11am,azure-devops
+2026-02-03,2026-02-03T11:08:58-05:00,2026-02-03T12:09:42-05:00,60,pruebas hacia reforma pensional,azure-devops
+2026-02-03,2026-02-03T12:09:42-05:00,2026-02-03T13:10:30-05:00,60,(sin detalle),azure-devops
+2026-02-03,2026-02-03T13:10:30-05:00,2026-02-03T14:10:30-05:00,60,pruebas hacia reforma pensional,azure-devops
+2026-02-03,2026-02-03T14:10:30-05:00,2026-02-03T15:10:30-05:00,60,pruebas hacia reforma pensional,azure-devops
+2026-02-03,2026-02-03T15:10:30-05:00,2026-02-03T16:10:30-05:00,60,pruebas hacia reforma pensional,azure-devops
+2026-02-03,2026-02-03T16:10:30-05:00,2026-02-03T16:58:15-05:00,47,pruebas hacia reforma pensional,azure-devops

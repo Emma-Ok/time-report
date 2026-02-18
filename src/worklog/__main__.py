@@ -1,10 +1,8 @@
-from typing import cast
 import logging
 import os
+import sys
 
-from .config import parse_args, RunConfig, SummaryConfig
-from .runner import run
-from .weekly import weekly_summary
+from .cli import app
 
 
 def _setup_logging(base_dir: str) -> None:
@@ -27,15 +25,15 @@ def _setup_logging(base_dir: str) -> None:
 
 
 def main() -> None:
-    cmd, cfg = parse_args()
-    base_dir = cfg.base_dir if hasattr(cfg, "base_dir") else os.getcwd()
+    base_dir = "logs"
+    args = sys.argv[1:]
+    if "--base-dir" in args:
+        idx = args.index("--base-dir")
+        if idx + 1 < len(args):
+            base_dir = args[idx + 1]
+
     _setup_logging(base_dir)
-
-    if cmd == "run":
-        run(cast(RunConfig, cfg))
-        return
-
-    weekly_summary(cast(SummaryConfig, cfg))
+    app()
 
 
 if __name__ == "__main__":

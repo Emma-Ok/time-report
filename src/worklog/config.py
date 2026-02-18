@@ -14,6 +14,7 @@ class RunConfig:
     break_start: str
     break_end: str
     break_enabled: bool
+    input_timeout_sec: int
 
 @dataclass(frozen=True)
 class SummaryConfig:
@@ -40,6 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--break-start", type=str, default="13:00", help="Inicio de break HH:MM (default: 13:00).")
     pr.add_argument("--break-end", type=str, default="14:00", help="Fin de break HH:MM (default: 14:00).")
     pr.add_argument("--no-break", dest="break_enabled", action="store_false", default=True, help="Desactiva el break automático.")
+    pr.add_argument("--input-timeout", type=int, default=120, help="Segundos para esperar respuesta antes de auto-registrar (default: 120).")
 
     # summary
     ps = sub.add_parser("summary", help="Generar resumen semanal")
@@ -68,6 +70,7 @@ def parse_args():
             break_start=a.break_start,
             break_end=a.break_end,
             break_enabled=bool(a.break_enabled),
+            input_timeout_sec=max(0, int(a.input_timeout)),
         )
 
     # summary

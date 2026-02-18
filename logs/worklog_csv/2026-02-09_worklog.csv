@@ -1,0 +1,11 @@
+date,start,end,minutes,activity,tags
+2026-02-09,2026-02-09T07:49:26-05:00,2026-02-09T07:49:26-05:00,1,pruebas dirigidas a enrutar y probar certificados y extractos,azure-devops`
+2026-02-09,2026-02-09T07:49:26-05:00,2026-02-09T08:50:03-05:00,60,pruebas dirigidas a enrutar y probar certificados y extractos,azure-devops`
+2026-02-09,2026-02-09T08:50:03-05:00,2026-02-09T09:50:18-05:00,60,pruebas dirigidas a enrutar y probar certificados y extractos,azure-devops`
+2026-02-09,2026-02-09T09:50:18-05:00,2026-02-09T10:50:18-05:00,60,probando enrutador de cesantias,azure-devops`
+2026-02-09,2026-02-09T10:50:18-05:00,2026-02-09T11:50:18-05:00,60,probando enrutador de cesantias,azure-devops`
+2026-02-09,2026-02-09T11:50:18-05:00,2026-02-09T12:09:41-05:00,19,probando enrutador de cesantias,azure-devops`
+2026-02-09,2026-02-09T12:09:41-05:00,2026-02-09T13:10:02-05:00,60,probando enrutador de cesantias,azure-devops`
+2026-02-09,2026-02-09T13:10:02-05:00,2026-02-09T14:10:18-05:00,60,(break / descanso),azure-devops`
+2026-02-09,2026-02-09T14:10:18-05:00,2026-02-09T15:10:32-05:00,60,probando enrutador de po y reunion con norita,azure-devops`
+2026-02-09,2026-02-09T15:10:32-05:00,2026-02-09T16:10:56-05:00,60,probando enrutador de po y reunion con norita,azure-devops`

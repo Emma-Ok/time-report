@@ -1,0 +1,10 @@
+date,start,end,minutes,activity,tags
+2026-02-04,2026-02-04T07:17:29-05:00,2026-02-04T08:17:28-05:00,59,pruebas y reporte hallazgos reforma pensional,azure-devops
+2026-02-04,2026-02-04T08:17:28-05:00,2026-02-04T09:18:03-05:00,60,2. pruebas doble asesoria,azure-devops
+2026-02-04,2026-02-04T09:18:03-05:00,2026-02-04T10:18:03-05:00,60,daily y reunión 10:30 a 12:30 abordemos errores watson,azure-devops
+2026-02-04,2026-02-04T10:18:03-05:00,2026-02-04T11:18:03-05:00,60,daily y reunión 10:30 a 12:30 abordemos errores watson,azure-devops
+2026-02-04,2026-02-04T11:18:03-05:00,2026-02-04T11:26:20-05:00,8,daily y reunión 10:30 a 12:30 abordemos errores watson,azure-devops
+2026-02-04,2026-02-04T11:26:20-05:00,2026-02-04T12:27:27-05:00,61,reporte de hallazgos,azure-devops
+2026-02-04,2026-02-04T12:27:27-05:00,2026-02-04T14:03:45-05:00,96,(break / descanso),azure-devops
+2026-02-04,2026-02-04T14:03:45-05:00,2026-02-04T15:03:45-05:00,60,5. pruebas certificados con nueva cedula,azure-devops
+2026-02-04,2026-02-04T15:03:45-05:00,2026-02-04T15:52:34-05:00,48,5. pruebas certificados con nueva cedula,azure-devops

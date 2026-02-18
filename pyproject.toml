@@ -6,7 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Alidev" }]
-dependencies = []
+dependencies = [
+	"rich>=13.9.0",
+	"typer>=0.16.0",
+	"tzdata>=2025.1",
+]
 
 [project.scripts]
 worklog = "worklog.__main__:main"

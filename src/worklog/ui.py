@@ -1,8 +1,12 @@
 from typing import List
+from rich.console import Console
+from rich.prompt import Prompt
+
+console = Console()
 
 def prompt_multiline(msg: str) -> str:
-    print(msg)
-    print("(Termina con una línea vacía)")
+    console.print(f"[bold cyan]{msg}[/bold cyan]")
+    console.print("[dim](Termina con una línea vacía)[/dim]")
     lines: List[str] = []
     while True:
         line = input()
@@ -14,13 +18,13 @@ def prompt_multiline(msg: str) -> str:
 def sprint_menu(last_activities: List[str]) -> None:
     if not last_activities:
         return
-    print("Sprint: (r)=repetir última, (1..9)=usar actividad reciente")
+    console.print("[bold]Sprint:[/bold] (r)=repetir última, (1..9)=usar actividad reciente")
     recent = last_activities[-9:]
     for i, a in enumerate(recent, start=1):
         one_line = a.splitlines()[0]
         if len(one_line) > 60:
             one_line = one_line[:57] + "..."
-        print(f"  {i}. {one_line}")
+        console.print(f"  {i}. {one_line}")
 
 def choose_activity(choice: str, last_activities: List[str]) -> str:
     choice = choice.strip().lower()
@@ -41,13 +45,13 @@ def choose_activity(choice: str, last_activities: List[str]) -> str:
 def maybe_edit(activity: str) -> str:
     if not activity:
         return activity
-    print("\nActividad seleccionada. ¿Editar? (Enter=no / escribe algo=sí)")
-    if input("> ").strip():
+    console.print("\n[bold]Actividad seleccionada.[/bold] ¿Editar? (Enter=no / escribe algo=sí)")
+    if Prompt.ask(">", default="").strip():
         return prompt_multiline("Nueva actividad (multilínea):")
     return activity
 
 def ask_tags(default_tags: str) -> str:
-    t = input(f"Tags (Enter para '{default_tags}'): ").strip()
+    t = Prompt.ask(f"Tags (Enter para '{default_tags}')", default="").strip()
     return t if t else default_tags
 
 def update_sprint(last_activities: List[str], activity: str) -> List[str]:
